@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import type { WordRecord } from '../types';
 
 interface Props {
@@ -9,7 +8,7 @@ interface Props {
   hasWrongWords: boolean;
 }
 
-export default function SummaryPhase({ results, totalWords, onPlayAgain, onReviewWrong, hasWrongWords }: Props) {
+export default function SummaryPhase({ results, onPlayAgain, onReviewWrong, hasWrongWords }: Props) {
   const correct = results.filter(r => r.correct).length;
   const total = results.length;
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;

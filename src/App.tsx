@@ -71,7 +71,7 @@ export default function App() {
         onStartGame={handleStartGame}
         onSettings={() => setPhase('settings')}
         onStats={() => setPhase('stats')}
-        onEnrich={(words) => { setPhase('enrich'); }}
+        onEnrich={() => { setPhase('enrich'); }}
         hasWords={!!currentBatch && currentBatch.words.length > 0}
       />
     );

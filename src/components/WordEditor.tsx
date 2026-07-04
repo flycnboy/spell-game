@@ -42,14 +42,14 @@ export default function WordEditor({ batch, onClose }: Props) {
   const handleAddWord = () => {
     const w = newWord.trim().toLowerCase();
     if (w && /^[a-z]+$/i.test(w) && !unique.includes(w)) {
-      setWordsText(prev => [...unique, w].join(', '));
+      setWordsText([...unique, w].join(', '));
       setNewWord('');
     }
   };
 
   const handleRemoveWord = (word: string) => {
-    setWordsText(prev => {
-      const current = prev
+    setWordsText(prevText => {
+      const current = prevText
         .split(/[\n,，\s]+/)
         .map(w => w.trim().toLowerCase())
         .filter(w => w.length > 0 && /^[a-z]+$/i.test(w));
