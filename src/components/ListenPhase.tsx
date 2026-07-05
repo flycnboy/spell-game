@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { EnrichedWord } from '../hooks/useEnrich';
 
 interface Props {
@@ -7,22 +8,27 @@ interface Props {
 }
 
 export default function ListenPhase({ word, enriched, onNext }: Props) {
+  const btnRef = useRef<HTMLButtonElement>(null);
 
-  const handleSpeak = () => {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(word);
-    u.lang = 'en-US';
-    u.rate = 0.7;
-    u.pitch = 1.1;
-    speechSynthesis.speak(u);
-  };
+  useEffect(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const handler = () => {
+      const u = new SpeechSynthesisUtterance(word);
+      u.lang = 'en-US';
+      u.rate = 0.7;
+      speechSynthesis.speak(u);
+    };
+    btn.addEventListener('click', handler);
+    return () => btn.removeEventListener('click', handler);
+  }, [word]);
 
   return (
     <div className="flex flex-col items-center px-6 max-w-md mx-auto min-h-[70vh]">
       <p className="text-gray-400 mb-4 text-lg">听一听，这是什么单词？</p>
 
       <button
-        onClick={handleSpeak}
+        ref={btnRef}
         className="w-32 h-32 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-5xl"
       >
         🔊
@@ -31,7 +37,7 @@ export default function ListenPhase({ word, enriched, onNext }: Props) {
       <p className="text-gray-300 text-sm mt-4 mb-8">点击喇叭播放发音</p>
 
       {enriched && (
-        <div className="w-full bg-indigo-50 p-5 rounded-xl mb-6 animate-fade-in text-center">
+        <div className="w-full bg-indigo-50 p-5 rounded-xl mb-6 text-center">
           <p className="text-sm text-indigo-600 mb-1">释义：{enriched.chinese}</p>
           <p className="text-sm text-gray-500 italic">{enriched.example.replace(/(^"|"$)/g, '')}</p>
         </div>
@@ -39,7 +45,7 @@ export default function ListenPhase({ word, enriched, onNext }: Props) {
 
       <button
         onClick={onNext}
-        className="w-full py-4 bg-indigo-500 text-white rounded-xl font-bold text-lg active:bg-indigo-600 shadow-lg animate-bounce-in"
+        className="w-full py-4 bg-indigo-500 text-white rounded-xl font-bold text-lg active:bg-indigo-600 shadow-lg"
       >
         开始拼写
       </button>
