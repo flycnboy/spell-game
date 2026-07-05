@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import type { EnrichedWord } from '../hooks/useEnrich';
 
 interface Props {
@@ -8,27 +8,22 @@ interface Props {
 }
 
 export default function ListenPhase({ word, enriched, onNext }: Props) {
-  const btnRef = useRef<HTMLButtonElement>(null);
+  const wordRef = useRef(word);
+  wordRef.current = word;
 
-  useEffect(() => {
-    const btn = btnRef.current;
-    if (!btn) return;
-    const handler = () => {
-      const u = new SpeechSynthesisUtterance(word);
-      u.lang = 'en-US';
-      u.rate = 0.7;
-      speechSynthesis.speak(u);
-    };
-    btn.addEventListener('click', handler);
-    return () => btn.removeEventListener('click', handler);
-  }, [word]);
+  const handleSpeak = () => {
+    const u = new SpeechSynthesisUtterance(wordRef.current);
+    u.lang = 'en-US';
+    u.rate = 0.7;
+    speechSynthesis.speak(u);
+  };
 
   return (
     <div className="flex flex-col items-center px-6 max-w-md mx-auto min-h-[70vh]">
       <p className="text-gray-400 mb-4 text-lg">听一听，这是什么单词？</p>
 
       <button
-        ref={btnRef}
+        onClick={handleSpeak}
         className="w-32 h-32 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-5xl"
       >
         🔊
