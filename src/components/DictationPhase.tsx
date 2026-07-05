@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { useSpeech } from '../hooks/useSpeech';
-
 import type { EnrichedWord } from '../hooks/useEnrich';
 
 interface Props {
@@ -11,7 +9,14 @@ interface Props {
 
 export default function DictationPhase({ word, enriched, onSubmit }: Props) {
   const [input, setInput] = useState('');
-  const { speak } = useSpeech();
+
+  const handleSpeak = () => {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.7;
+    utterance.pitch = 1.1;
+    speechSynthesis.speak(utterance);
+  };
 
   return (
     <div className="flex flex-col items-center px-6 py-8 max-w-md mx-auto">
@@ -19,7 +24,7 @@ export default function DictationPhase({ word, enriched, onSubmit }: Props) {
       {enriched && <p className="text-sm text-indigo-500 mb-6 animate-fade-in">释义：{enriched.chinese}</p>}
 
       <button
-        onClick={() => speak(word)}
+        onClick={handleSpeak}
         className="w-20 h-20 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-3xl mb-8 transition"
       >
         🔊

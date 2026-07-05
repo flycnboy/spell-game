@@ -1,4 +1,3 @@
-import { useSpeech } from '../hooks/useSpeech';
 import type { EnrichedWord } from '../hooks/useEnrich';
 
 interface Props {
@@ -8,14 +7,21 @@ interface Props {
 }
 
 export default function ListenPhase({ word, enriched, onNext }: Props) {
-  const { speak } = useSpeech();
+  const handleSpeak = () => {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.7;
+    utterance.pitch = 1.1;
+    utterance.onend = () => console.log('语音播放完毕');
+    speechSynthesis.speak(utterance);
+  };
 
   return (
     <div className="flex flex-col items-center px-6 max-w-md mx-auto min-h-[70vh]">
       <p className="text-gray-400 mb-4 text-lg">听一听，这是什么单词？</p>
 
       <button
-        onClick={() => speak(word)}
+        onClick={handleSpeak}
         className="w-32 h-32 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-5xl transition animate-pulse-slow"
       >
         🔊
