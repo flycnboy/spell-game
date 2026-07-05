@@ -23,7 +23,7 @@ export default function ListenPhase({ word, enriched, onNext }: Props) {
       <p className="text-gray-400 mb-4 text-lg">听一听，这是什么单词？</p>
 
       <button
-        onClick={handleSpeak}
+        onPointerDown={handleSpeak}
         className="w-32 h-32 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-5xl"
       >
         🔊
