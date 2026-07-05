@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function SpellPhase({ word, enriched, onSubmit }: Props) {
-  const target = word.toUpperCase();
+  const target = word.toLowerCase();
   const [selected, setSelected] = useState<string[]>([]);
   const [shakeKey, setShakeKey] = useState(0);
 
@@ -65,8 +65,8 @@ export default function SpellPhase({ word, enriched, onSubmit }: Props) {
         return;
       }
       if (e.key.length !== 1) return;
-      const letter = e.key.toUpperCase();
-      if (!/[A-Z]/.test(letter)) return;
+      const letter = e.key.toLowerCase();
+      if (!/[a-z]/.test(letter)) return;
       addLetter(letter);
     };
     window.addEventListener('keydown', handler);
