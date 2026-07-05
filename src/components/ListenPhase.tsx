@@ -7,13 +7,14 @@ interface Props {
 }
 
 export default function ListenPhase({ word, enriched, onNext }: Props) {
+
   const handleSpeak = () => {
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.7;
-    utterance.pitch = 1.1;
-    utterance.onend = () => console.log('语音播放完毕');
-    speechSynthesis.speak(utterance);
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = 'en-US';
+    u.rate = 0.7;
+    u.pitch = 1.1;
+    speechSynthesis.speak(u);
   };
 
   return (
@@ -22,7 +23,7 @@ export default function ListenPhase({ word, enriched, onNext }: Props) {
 
       <button
         onClick={handleSpeak}
-        className="w-32 h-32 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-5xl transition animate-pulse-slow"
+        className="w-32 h-32 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-5xl"
       >
         🔊
       </button>
