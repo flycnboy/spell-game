@@ -1,5 +1,8 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { EnrichedWord } from '../hooks/useEnrich';
+
+// 全局保持 utterance 引用，防止垃圾回收
+let gUtterance: SpeechSynthesisUtterance | null = null;
 
 interface Props {
   word: string;
@@ -8,22 +11,36 @@ interface Props {
 }
 
 export default function ListenPhase({ word, enriched, onNext }: Props) {
+  const btnRef = useRef<HTMLButtonElement>(null);
   const wordRef = useRef(word);
   wordRef.current = word;
 
-  const handleSpeak = () => {
-    const u = new SpeechSynthesisUtterance(wordRef.current);
-    u.lang = 'en-US';
-    u.rate = 0.7;
-    speechSynthesis.speak(u);
-  };
+  useEffect(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+
+    // 用原生 DOM 事件，绕过 React 合成事件
+    const handler = () => {
+      if (gUtterance) {
+        speechSynthesis.cancel();
+      }
+      const u = new SpeechSynthesisUtterance(wordRef.current);
+      u.lang = 'en-US';
+      u.rate = 0.7;
+      gUtterance = u;
+      speechSynthesis.speak(u);
+    };
+
+    btn.addEventListener('click', handler);
+    return () => btn.removeEventListener('click', handler);
+  }, []);
 
   return (
     <div className="flex flex-col items-center px-6 max-w-md mx-auto min-h-[70vh]">
       <p className="text-gray-400 mb-4 text-lg">听一听，这是什么单词？</p>
 
       <button
-        onPointerDown={handleSpeak}
+        ref={btnRef}
         className="w-32 h-32 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-5xl"
       >
         🔊
