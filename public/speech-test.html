@@ -1,0 +1,15 @@
+<!doctype html>
+<html><body style="text-align:center;padding-top:100px">
+  <button onclick="speak()" style="font-size:80px">🔊</button>
+  <p id="msg">点喇叭测试</p>
+  <script>
+    function speak() {
+      var u = new SpeechSynthesisUtterance('hello');
+      u.lang = 'en-US';
+      u.rate = 0.7;
+      u.onstart = function() { document.getElementById('msg').innerText = '✅ 正在朗读'; };
+      u.onerror = function(e) { document.getElementById('msg').innerText = '❌ 错误: ' + e.error; };
+      speechSynthesis.speak(u);
+    }
+  </script>
+</body></html>
