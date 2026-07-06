@@ -9,23 +9,28 @@ interface Props {
 
 export default function DictationPhase({ word, enriched, onSubmit }: Props) {
   const [input, setInput] = useState('');
+  const [repeatCount, setRepeatCount] = useState(1);
   const btnRef = useRef<HTMLButtonElement>(null);
   const wordRef = useRef(word);
   wordRef.current = word;
 
-  useEffect(() => {
-    const btn = btnRef.current;
-    if (!btn) return;
-    const handler = () => {
-      speechSynthesis.cancel();
+  const speakWord = () => {
+    speechSynthesis.cancel();
+    // 按设置的次数循环朗读
+    for (let i = 0; i < repeatCount; i++) {
       const u = new SpeechSynthesisUtterance(wordRef.current);
       u.lang = 'en-US';
       u.rate = 0.7;
       speechSynthesis.speak(u);
-    };
-    btn.addEventListener('click', handler);
-    return () => btn.removeEventListener('click', handler);
-  }, []);
+    }
+  };
+
+  useEffect(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    btn.addEventListener('click', speakWord);
+    return () => btn.removeEventListener('click', speakWord);
+  }, [repeatCount]);
 
   return (
     <div className="flex flex-col items-center px-6 py-8 max-w-md mx-auto">
@@ -34,10 +39,29 @@ export default function DictationPhase({ word, enriched, onSubmit }: Props) {
 
       <button
         ref={btnRef}
-        className="w-20 h-20 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-3xl mb-8 transition"
+        className="w-20 h-20 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-3xl mb-4 transition"
       >
         🔊
       </button>
+
+      {/* 重听次数设置 */}
+      <div className="flex items-center gap-2 mb-6">
+        <span className="text-xs text-gray-400">播放</span>
+        {[1, 2, 3].map(n => (
+          <button
+            key={n}
+            onClick={() => setRepeatCount(n)}
+            className={`w-8 h-8 rounded-full text-xs font-bold transition ${
+              repeatCount === n
+                ? 'bg-yellow-400 text-white'
+                : 'bg-gray-100 text-gray-400'
+            }`}
+          >
+            {n}
+          </button>
+        ))}
+        <span className="text-xs text-gray-400">遍</span>
+      </div>
 
       <p className="text-gray-300 text-xs mb-8">点击喇叭可重复播放</p>
 

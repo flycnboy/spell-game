@@ -1,0 +1,86 @@
+{
+  "batches": [
+    {
+      "id": "mr8xgwei-lv1b",
+      "label": "K-48-The Mailman's Hat",
+      "date": "2026-07-06",
+      "words": [
+        "gusty",
+        "mailman",
+        "porch",
+        "pouch",
+        "shreds",
+        "treat"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8xm3yh-u87a",
+      "label": "K-53-Model Rockets+K-54-Mongo's Migration",
+      "date": "2026-07-06",
+      "words": [
+        "competitions",
+        "hobby",
+        "model",
+        "parachute",
+        "demanded",
+        "directions"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8xx03l-fe41",
+      "label": "K-55-Nature Stinks!",
+      "date": "2026-07-06",
+      "words": [
+        "disturb",
+        "rotten",
+        "spray",
+        "stinky"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8y011b-xi22",
+      "label": "K-57-One Pony Too Many",
+      "date": "2026-07-06",
+      "words": [
+        "bills",
+        "foal",
+        "responsibility",
+        "shaggy",
+        "stocky"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8y4nrk-92jk",
+      "label": "K-59-Police Officers",
+      "date": "2026-07-06",
+      "words": [
+        "communities",
+        "emergencies",
+        "patrol",
+        "siren",
+        "traffic",
+        "vehicles"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8y9dte-efwa",
+      "label": "K2（48~59）",
+      "date": "2026-07-06",
+      "words": [
+        "gusty",
+        "mailman",
+        "porch",
+        "pouch",
+        "shreds",
+        "treat"
+      ],
+      "source": ""
+    }
+  ],
+  "currentBatchId": "mr8y9dte-efwa"
+}

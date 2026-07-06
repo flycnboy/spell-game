@@ -181,30 +181,46 @@ export default function WordEditor({ batch, onClose }: Props) {
       {showImport && (
         <div className="border-t pt-4 mb-4">
           <p className="text-sm font-bold text-gray-500 mb-2">选择要导入的单词</p>
-          {otherBatches.map(ob => (
-            <div key={ob.id} className="mb-3">
-              <p className="text-xs text-gray-400 mb-1">{ob.label} ({ob.words.length}词)</p>
-              <div className="flex flex-wrap gap-1">
-                {ob.words.map(w => (
-                  <span
-                    key={w}
-                    onClick={() => {
-                      setSelectedImport(prev =>
-                        prev.includes(w) ? prev.filter(x => x !== w) : [...prev, w]
-                      );
-                    }}
-                    className={`px-2 py-0.5 rounded-full text-xs font-bold cursor-pointer ${
-                      selectedImport.includes(w)
-                        ? 'bg-indigo-500 text-white'
-                        : 'bg-gray-100 text-gray-500'
-                    }`}
-                  >
-                    {w}
-                  </span>
-                ))}
+          {otherBatches.map(ob => {
+            const allSelected = ob.words.every(w => selectedImport.includes(w));
+            const toggleAll = () => {
+              if (allSelected) {
+                setSelectedImport(prev => prev.filter(w => !ob.words.includes(w)));
+              } else {
+                const toAdd = ob.words.filter(w => !selectedImport.includes(w));
+                setSelectedImport(prev => [...prev, ...toAdd]);
+              }
+            };
+            return (
+              <div key={ob.id} className="mb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs text-gray-400">{ob.label} ({ob.words.length}词)</p>
+                  <button onClick={toggleAll} className="text-xs text-indigo-500 font-bold">
+                    {allSelected ? '取消全选' : '全选'}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {ob.words.map(w => (
+                    <span
+                      key={w}
+                      onClick={() => {
+                        setSelectedImport(prev =>
+                          prev.includes(w) ? prev.filter(x => x !== w) : [...prev, w]
+                        );
+                      }}
+                      className={`px-2 py-0.5 rounded-full text-xs font-bold cursor-pointer ${
+                        selectedImport.includes(w)
+                          ? 'bg-indigo-500 text-white'
+                          : 'bg-gray-100 text-gray-500'
+                      }`}
+                    >
+                      {w}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           <div className="flex gap-2 mt-2">
             <button onClick={() => setShowImport(false)} className="flex-1 py-2 bg-gray-200 rounded-lg text-xs">取消</button>
             <button onClick={handleImportConfirm} className="flex-1 py-2 bg-indigo-500 text-white rounded-lg text-xs">导入</button>
