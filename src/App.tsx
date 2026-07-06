@@ -160,9 +160,9 @@ export default function App() {
           <button onClick={quit} className="text-xs text-red-400 font-bold">结束</button>
         </div>
         {mode === 'spell' ? (
-          <SpellPhase word={words[currentIndex]} enriched={getEnriched(words[currentIndex])} onSubmit={handleSubmit} />
+          <SpellPhase word={words[currentIndex]} enriched={getEnriched(words[currentIndex])} onSubmit={handleSubmit} onSkip={nextWord} />
         ) : (
-          <DictationPhase word={words[currentIndex]} enriched={getEnriched(words[currentIndex])} onSubmit={handleSubmit} />
+          <DictationPhase word={words[currentIndex]} enriched={getEnriched(words[currentIndex])} onSubmit={handleSubmit} onSkip={nextWord} />
         )}
       </div>
     );

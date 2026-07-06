@@ -5,9 +5,10 @@ interface Props {
   word: string;
   enriched: EnrichedWord | null;
   onSubmit: (answer: string) => void;
+  onSkip: () => void;
 }
 
-export default function DictationPhase({ word, enriched, onSubmit }: Props) {
+export default function DictationPhase({ word, enriched, onSubmit, onSkip }: Props) {
   const [input, setInput] = useState('');
   const [repeatCount, setRepeatCount] = useState(1);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -85,6 +86,13 @@ export default function DictationPhase({ word, enriched, onSubmit }: Props) {
         }`}
       >
         确认
+      </button>
+
+      <button
+        onClick={onSkip}
+        className="mt-3 px-6 py-2 text-sm text-gray-400 font-bold"
+      >
+        放弃本单词，下一个 →
       </button>
     </div>
   );

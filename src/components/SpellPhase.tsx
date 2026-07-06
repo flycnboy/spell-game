@@ -15,9 +15,10 @@ interface Props {
   word: string;
   enriched: EnrichedWord | null;
   onSubmit: (answer: string) => void;
+  onSkip: () => void;
 }
 
-export default function SpellPhase({ word, enriched, onSubmit }: Props) {
+export default function SpellPhase({ word, enriched, onSubmit, onSkip }: Props) {
   const target = word.toLowerCase();
   const [selected, setSelected] = useState<string[]>([]);
   const [shakeKey, setShakeKey] = useState(0);
@@ -130,6 +131,13 @@ export default function SpellPhase({ word, enriched, onSubmit }: Props) {
         }`}
       >
         确认
+      </button>
+
+      <button
+        onClick={onSkip}
+        className="mt-3 px-6 py-2 text-sm text-gray-400 font-bold"
+      >
+        放弃本单词，下一个 →
       </button>
     </div>
   );
