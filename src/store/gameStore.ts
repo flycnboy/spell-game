@@ -16,6 +16,7 @@ interface GameState {
   startReview: (words: string[]) => void;
   submitAnswer: (answer: string, correct: boolean) => void;
   retry: () => void;
+  skipWord: () => void;
   nextWord: () => void;
   quit: () => void;
   reset: () => void;
@@ -63,6 +64,17 @@ export const useGameStore = create<GameState>((set) => ({
   })),
 
   retry: () => set({ isCorrect: null, lastAnswer: '', phase: 'listen' }),
+
+  skipWord: () => set((state) => {
+    // 记录为错误
+    const word = state.words[state.currentIndex];
+    return {
+      lastAnswer: '(跳过)',
+      isCorrect: false,
+      roundResults: [...state.roundResults, { word, correct: false }],
+      phase: 'result',
+    };
+  }),
 
   nextWord: () => set((state) => {
     if (state.currentIndex + 1 >= state.words.length) {

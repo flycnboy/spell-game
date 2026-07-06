@@ -8,9 +8,10 @@ interface Props {
   word: string;
   enriched: EnrichedWord | null;
   onNext: () => void;
+  onSkip: () => void;
 }
 
-export default function ListenPhase({ word, enriched, onNext }: Props) {
+export default function ListenPhase({ word, enriched, onNext, onSkip }: Props) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const wordRef = useRef(word);
   wordRef.current = word;
@@ -60,6 +61,13 @@ export default function ListenPhase({ word, enriched, onNext }: Props) {
         className="w-full py-4 bg-indigo-500 text-white rounded-xl font-bold text-lg active:bg-indigo-600 shadow-lg"
       >
         开始拼写
+      </button>
+
+      <button
+        onClick={onSkip}
+        className="mt-4 w-full py-2 text-sm text-gray-400 font-bold"
+      >
+        跳过本词 →
       </button>
     </div>
   );

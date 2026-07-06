@@ -19,12 +19,12 @@ export default function App() {
     phase, mode, words, currentIndex, isCorrect, lastAnswer,
     roundResults, isReviewMode,
     setPhase, startGame, startReview, submitAnswer, retry,
-    nextWord, quit,
+    skipWord, nextWord, quit,
   } = useGameStore();
 
   const { recordResult, getWrongWords } = useStats();
   const { currentBatch } = useWordBanks();
-  const { settings, saveSettings, getTodayPlan, advanceDay, resetPlan } = useStudyPlan();
+  const { settings, saveSettings, advanceDay } = useStudyPlan();
   const { getEnriched } = useEnrich();
 
   const handleSubmit = (answer: string) => {
@@ -34,21 +34,16 @@ export default function App() {
     recordResult(word, mode, correct);
   };
 
+  const handleSkip = () => {
+    const word = words[currentIndex];
+    skipWord();
+    recordResult(word, mode, false);
+  };
+
   const handleStartGame = (m: typeof mode) => {
     if (!currentBatch || currentBatch.words.length === 0) return;
-    const plan = getTodayPlan(currentBatch.words, currentBatch.id);
-    let allWords = [...plan.newWords, ...plan.reviewSlots.flatMap(s => s.words)];
-
-    // 如果当前 day 已经超出词库范围，重置并从第1天开始
-    if (allWords.length === 0 && currentBatch.words.length > 0) {
-      resetPlan(currentBatch.id);
-      const newPlan = getTodayPlan(currentBatch.words, currentBatch.id);
-      allWords = [...newPlan.newWords, ...newPlan.reviewSlots.flatMap(s => s.words)];
-    }
-
-    if (allWords.length > 0) {
-      startGame(allWords, m);
-    }
+    useGameStore.setState({ mode: m });
+    setPhase('plan');
   };
 
   const handleStartReview = (reviewWords: string[]) => {
@@ -106,7 +101,8 @@ export default function App() {
   if (phase === 'plan') {
     return (
       <TodayPlan
-        onStart={(todayWords) => startGame(todayWords, mode)}
+        mode={mode}
+        onStart={(todayWords, m) => startGame(todayWords, m)}
         onBack={() => setPhase('input')}
       />
     );
@@ -141,6 +137,7 @@ export default function App() {
           word={words[currentIndex]}
           enriched={getEnriched(words[currentIndex])}
           onNext={() => setPhase('play')}
+          onSkip={handleSkip}
         />
       </div>
     );
@@ -160,9 +157,9 @@ export default function App() {
           <button onClick={quit} className="text-xs text-red-400 font-bold">结束</button>
         </div>
         {mode === 'spell' ? (
-          <SpellPhase word={words[currentIndex]} enriched={getEnriched(words[currentIndex])} onSubmit={handleSubmit} onSkip={nextWord} />
+          <SpellPhase word={words[currentIndex]} enriched={getEnriched(words[currentIndex])} onSubmit={handleSubmit} onSkip={handleSkip} />
         ) : (
-          <DictationPhase word={words[currentIndex]} enriched={getEnriched(words[currentIndex])} onSubmit={handleSubmit} onSkip={nextWord} />
+          <DictationPhase word={words[currentIndex]} enriched={getEnriched(words[currentIndex])} onSubmit={handleSubmit} onSkip={handleSkip} />
         )}
       </div>
     );
