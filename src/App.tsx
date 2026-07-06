@@ -24,7 +24,7 @@ export default function App() {
 
   const { recordResult, getWrongWords } = useStats();
   const { currentBatch } = useWordBanks();
-  const { settings, saveSettings, getTodayPlan, advanceDay } = useStudyPlan();
+  const { settings, saveSettings, getTodayPlan, advanceDay, resetPlan } = useStudyPlan();
   const { getEnriched } = useEnrich();
 
   const handleSubmit = (answer: string) => {
@@ -37,10 +37,16 @@ export default function App() {
   const handleStartGame = (m: typeof mode) => {
     if (!currentBatch || currentBatch.words.length === 0) return;
     const plan = getTodayPlan(currentBatch.words, currentBatch.id);
-    const allWords = [...plan.newWords, ...plan.reviewSlots.flatMap(s => s.words)];
+    let allWords = [...plan.newWords, ...plan.reviewSlots.flatMap(s => s.words)];
 
-    // 先进入富化检查
-    if (currentBatch.words.length > 0) {
+    // 如果当前 day 已经超出词库范围，重置并从第1天开始
+    if (allWords.length === 0 && currentBatch.words.length > 0) {
+      resetPlan(currentBatch.id);
+      const newPlan = getTodayPlan(currentBatch.words, currentBatch.id);
+      allWords = [...newPlan.newWords, ...newPlan.reviewSlots.flatMap(s => s.words)];
+    }
+
+    if (allWords.length > 0) {
       startGame(allWords, m);
     }
   };
