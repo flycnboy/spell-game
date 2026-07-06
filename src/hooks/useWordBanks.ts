@@ -115,6 +115,30 @@ export function useWordBanks() {
     return currentBatch?.words || [];
   }, [currentBatch]);
 
+  // 导出全部词库为 JSON
+  const exportAll = useCallback((): string => {
+    return JSON.stringify({ batches: data.batches, currentBatchId: data.currentBatchId }, null, 2);
+  }, [data.batches, data.currentBatchId]);
+
+  // 从 JSON 导入词库（合并模式：保留已有 + 加入新词库）
+  const importAll = useCallback((json: string): number => {
+    try {
+      const parsed = JSON.parse(json);
+      if (!parsed.batches || !Array.isArray(parsed.batches)) return 0;
+      setData(prev => {
+        const existingIds = new Set(prev.batches.map(b => b.id));
+        const newBatches = parsed.batches.filter((b: WordBatch) => !existingIds.has(b.id));
+        return {
+          batches: [...prev.batches, ...newBatches],
+          currentBatchId: newBatches.length > 0 ? newBatches[0].id : prev.currentBatchId,
+        };
+      });
+      return parsed.batches.length;
+    } catch {
+      return 0;
+    }
+  }, []);
+
   return {
     batches: data.batches,
     currentBatch,
@@ -125,5 +149,7 @@ export function useWordBanks() {
     deleteBatch,
     setCurrent,
     getGameWords,
+    exportAll,
+    importAll,
   };
 }

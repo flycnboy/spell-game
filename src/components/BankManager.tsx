@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { GameMode } from '../types';
 import { useWordBanks } from '../hooks/useWordBanks';
 import WordEditor from './WordEditor';
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function BankManager({ onStartGame, onSettings, onStats, onEnrich, hasWords }: Props) {
-  const { batches, currentBatch, syncFromUrl, createBatch, deleteBatch, setCurrent } = useWordBanks();
+  const { batches, currentBatch, syncFromUrl, createBatch, deleteBatch, setCurrent, renameBatch, exportAll, importAll } = useWordBanks();
   const [mode, setMode] = useState<GameMode>('spell');
   const [showSync, setShowSync] = useState(false);
   const [syncUrl, setSyncUrl] = useState(DEFAULT_SYNC_URL);
@@ -24,6 +24,9 @@ export default function BankManager({ onStartGame, onSettings, onStats, onEnrich
   const [showNew, setShowNew] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newWords, setNewWords] = useState('');
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -48,6 +51,42 @@ export default function BankManager({ onStartGame, onSettings, onStats, onEnrich
     setShowNew(false);
     setNewLabel('');
     setNewWords('');
+  };
+
+  const handleExport = () => {
+    const json = exportAll();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wordbacks_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const count = importAll(reader.result as string);
+      alert(count > 0 ? `成功导入 ${count} 个词库` : '导入失败，文件格式不正确');
+    };
+    reader.readAsText(file);
+    // 重置 input 以便重复选同一个文件
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const startRename = (id: string, label: string) => {
+    setRenamingId(id);
+    setRenameText(label);
+  };
+
+  const commitRename = () => {
+    if (renamingId && renameText.trim()) {
+      renameBatch(renamingId, renameText.trim());
+    }
+    setRenamingId(null);
   };
 
   if (editingBatchId) {
@@ -127,6 +166,24 @@ export default function BankManager({ onStartGame, onSettings, onStats, onEnrich
         </button>
       </div>
 
+      {/* 导入导出行 */}
+      <div className="flex gap-2 mb-4 animate-fade-in">
+        <button
+          onClick={handleExport}
+          disabled={batches.length === 0}
+          className="flex-1 py-2 bg-gray-100 text-gray-600 rounded-xl font-bold text-xs disabled:opacity-50"
+        >
+          📤 导出全部
+        </button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="flex-1 py-2 bg-gray-100 text-gray-600 rounded-xl font-bold text-xs"
+        >
+          📥 导入文件
+        </button>
+        <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+      </div>
+
       {/* 同步弹窗 */}
       {showSync && (
         <div className="bg-gray-50 rounded-xl p-4 mb-4">
@@ -185,14 +242,28 @@ export default function BankManager({ onStartGame, onSettings, onStats, onEnrich
             }`}
           >
             <div className="flex-1 min-w-0" onClick={() => setCurrent(b.id)}>
-              <p className="font-bold text-sm truncate">{b.label}</p>
-              <p className="text-xs text-gray-400">{b.words.length}词 · {b.date}{b.source ? ' · 远程' : ' · 本地'}</p>
+              {renamingId === b.id ? (
+                <input
+                  value={renameText}
+                  onChange={e => setRenameText(e.target.value)}
+                  onBlur={commitRename}
+                  onKeyDown={e => { if (e.key === 'Enter') commitRename(); }}
+                  autoFocus
+                  className="w-full text-sm font-bold border border-indigo-300 rounded px-2 py-0.5 focus:outline-none"
+                />
+              ) : (
+                <>
+                  <p className="font-bold text-sm truncate">{b.label}</p>
+                  <p className="text-xs text-gray-400">{b.words.length}词 · {b.date}{b.source ? ' · 远程' : ' · 本地'}</p>
+                </>
+              )}
             </div>
             {b.id === currentBatch?.id && (
               <span className="text-xs bg-indigo-500 text-white px-1.5 py-0.5 rounded-full">当前</span>
             )}
-            <button onClick={() => setEditingBatchId(b.id)} className="text-sm px-1">✏️</button>
-            <button onClick={() => { if (confirm('删除此词库？')) deleteBatch(b.id); }} className="text-sm px-1">🗑️</button>
+            <button onClick={() => startRename(b.id, b.label)} className="text-sm px-1" title="改名">✏️</button>
+            <button onClick={() => setEditingBatchId(b.id)} className="text-sm px-1" title="编辑">📝</button>
+            <button onClick={() => { if (confirm('删除此词库？')) deleteBatch(b.id); }} className="text-sm px-1" title="删除">🗑️</button>
           </div>
         ))}
         {batches.length === 0 && (
