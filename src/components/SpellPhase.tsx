@@ -20,49 +20,50 @@ interface Props {
 
 export default function SpellPhase({ word, enriched, onSubmit, onSkip }: Props) {
   const target = word.toLowerCase();
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [shakeKey, setShakeKey] = useState(0);
 
   const scrambled = useMemo(() => shuffle(target.split('')), [word]);
 
-  const letterCounts = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const l of target) map[l] = (map[l] || 0) + 1;
-    return map;
-  }, [target]);
-
-  const selectedCounts = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const l of selected) map[l] = (map[l] || 0) + 1;
-    return map;
-  }, [selected]);
+  const selectedLetters = useMemo(() =>
+    selectedIndices.map(i => scrambled[i]),
+    [selectedIndices, scrambled]
+  );
 
   const addLetter = useCallback((letter: string) => {
-    const used = selectedCounts[letter] || 0;
-    const total = letterCounts[letter] || 0;
-    if (used < total && selected.length < target.length) {
-      setSelected(prev => [...prev, letter]);
-      return;
-    }
-    // 这个字母已经被用完了，抖动提示
-    if (used >= total) {
+    if (selectedIndices.length >= target.length) return;
+
+    // 在 scrambled 中找第一个未被选中的匹配字母
+    const idx = scrambled.findIndex((l, i) =>
+      l === letter && !selectedIndices.includes(i)
+    );
+
+    if (idx !== -1) {
+      setSelectedIndices(prev => [...prev, idx]);
+    } else {
+      // 没有可用字母了，抖动提示
       setShakeKey(k => k + 1);
     }
-  }, [selected.length, target.length, selectedCounts, letterCounts]);
+  }, [selectedIndices, scrambled, target.length]);
 
-  const removeLetter = useCallback((index: number) => {
-    setSelected(prev => prev.filter((_, i) => i !== index));
+  const removeLetter = useCallback((slotIndex: number) => {
+    setSelectedIndices(prev => prev.filter((_, i) => i !== slotIndex));
   }, []);
 
-  // 键盘输入：只接受 target 中存在的字母，Backspace删除
+  // 键盘输入
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Backspace') {
-        if (selected.length > 0) removeLetter(selected.length - 1);
+        if (selectedIndices.length > 0) {
+          setSelectedIndices(prev => prev.filter((_, i) => i !== prev.length - 1));
+        }
         return;
       }
       if (e.key === 'Enter') {
-        if (selected.length === target.length) onSubmit(selected.join(''));
+        if (selectedIndices.length === target.length) {
+          const answer = selectedIndices.map(i => scrambled[i]).join('');
+          onSubmit(answer);
+        }
         return;
       }
       if (e.key.length !== 1) return;
@@ -72,7 +73,7 @@ export default function SpellPhase({ word, enriched, onSubmit, onSkip }: Props) 
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [addLetter, removeLetter, selected.length, target.length, onSubmit]);
+  }, [addLetter, selectedIndices.length, target.length, scrambled, onSubmit]);
 
   return (
     <div className="flex flex-col items-center px-6 py-8 max-w-md mx-auto">
@@ -84,31 +85,29 @@ export default function SpellPhase({ word, enriched, onSubmit, onSkip }: Props) 
         {Array.from({ length: target.length }).map((_, i) => (
           <div
             key={i}
-            onClick={() => selected[i] && removeLetter(i)}
+            onClick={() => selectedLetters[i] && removeLetter(i)}
             className={`w-12 h-14 border-b-4 flex items-center justify-center text-2xl font-extrabold transition ${
-              selected[i]
+              selectedLetters[i]
                 ? 'border-indigo-400 text-indigo-700 bg-indigo-50 rounded-lg active:bg-red-100 cursor-pointer'
                 : 'border-gray-300 text-gray-300'
             }`}
           >
-            {selected[i] || ''}
+            {selectedLetters[i] || ''}
           </div>
         ))}
       </div>
 
-      {/* 候选字母 */}
+      {/* 候选字母：按索引判断是否已被选中 */}
       <div className={`flex flex-wrap gap-3 justify-center ${shakeKey > 0 ? 'animate-wiggle' : ''}`} key={`shake-${shakeKey}`}>
         {scrambled.map((letter, i) => {
-          const used = selectedCounts[letter] || 0;
-          const total = letterCounts[letter] || 0;
-          const isUsed = used >= total;
+          const isSelected = selectedIndices.includes(i);
           return (
             <button
               key={i}
-              disabled={isUsed || selected.length >= target.length}
+              disabled={isSelected || selectedIndices.length >= target.length}
               onClick={() => addLetter(letter)}
               className={`w-14 h-14 rounded-xl text-2xl font-extrabold shadow transition ${
-                isUsed
+                isSelected
                   ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
                   : 'bg-white border-2 border-indigo-300 text-indigo-600 active:bg-indigo-100 active:scale-95'
               }`}
@@ -122,10 +121,10 @@ export default function SpellPhase({ word, enriched, onSubmit, onSkip }: Props) 
       <p className="text-xs text-gray-400 mt-3">💡 点击字母 或 键盘输入</p>
 
       <button
-        disabled={selected.length !== target.length}
-        onClick={() => onSubmit(selected.join(''))}
+        disabled={selectedIndices.length !== target.length}
+        onClick={() => onSubmit(selectedLetters.join(''))}
         className={`mt-6 px-10 py-3 rounded-xl font-bold text-lg transition ${
-          selected.length === target.length
+          selectedIndices.length === target.length
             ? 'bg-indigo-500 text-white active:bg-indigo-600 shadow-lg'
             : 'bg-gray-200 text-gray-400'
         }`}
