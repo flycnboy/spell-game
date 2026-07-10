@@ -22,7 +22,7 @@ export default function App() {
     skipWord, nextWord, quit,
   } = useGameStore();
 
-  const { recordResult, getWrongWords } = useStats();
+  const { recordResult } = useStats();
   const { currentBatch } = useWordBanks();
   const { settings, saveSettings, advanceDay } = useStudyPlan();
   const { getEnriched } = useEnrich();
@@ -52,8 +52,10 @@ export default function App() {
   };
 
   const handleReviewWrong = () => {
-    const wrongWords = getWrongWords();
-    handleStartReview(wrongWords);
+    // 从 roundResults 中提取错词（与 hasWrongWords 按钮显示逻辑同一数据源）
+    const wrongWords = [...new Set(roundResults.filter(r => !r.correct).map(r => r.word))];
+    if (wrongWords.length === 0) return;
+    startReview(wrongWords);
   };
 
   const handleFinishRound = () => {
