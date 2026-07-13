@@ -21,7 +21,6 @@ interface Props {
 export default function SpellPhase({ word, enriched, onSubmit, onSkip }: Props) {
   const target = word.toLowerCase();
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-  const [shakeKey, setShakeKey] = useState(0);
 
   const scrambled = useMemo(() => shuffle(target.split('')), [word]);
 
@@ -30,27 +29,15 @@ export default function SpellPhase({ word, enriched, onSubmit, onSkip }: Props) 
     [selectedIndices, scrambled]
   );
 
-  const addLetter = useCallback((letter: string) => {
-    if (selectedIndices.length >= target.length) return;
-
-    // 在 scrambled 中找第一个未被选中的匹配字母
-    const idx = scrambled.findIndex((l, i) =>
-      l === letter && !selectedIndices.includes(i)
-    );
-
-    if (idx !== -1) {
-      setSelectedIndices(prev => [...prev, idx]);
-    } else {
-      // 没有可用字母了，抖动提示
-      setShakeKey(k => k + 1);
-    }
-  }, [selectedIndices, scrambled, target.length]);
+  const selectIndex = useCallback((idx: number) => {
+    if (selectedIndices.includes(idx) || selectedIndices.length >= target.length) return;
+    setSelectedIndices(prev => [...prev, idx]);
+  }, [selectedIndices, target.length]);
 
   const removeLetter = useCallback((slotIndex: number) => {
     setSelectedIndices(prev => prev.filter((_, i) => i !== slotIndex));
   }, []);
 
-  // 键盘输入
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Backspace') {
@@ -69,18 +56,20 @@ export default function SpellPhase({ word, enriched, onSubmit, onSkip }: Props) 
       if (e.key.length !== 1) return;
       const letter = e.key.toLowerCase();
       if (!/[a-z]/.test(letter)) return;
-      addLetter(letter);
+      const idx = scrambled.findIndex((l, i) =>
+        l === letter && !selectedIndices.includes(i)
+      );
+      if (idx !== -1) selectIndex(idx);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [addLetter, selectedIndices.length, target.length, scrambled, onSubmit]);
+  }, [selectIndex, selectedIndices, scrambled, target.length, onSubmit]);
 
   return (
     <div className="flex flex-col items-center px-6 py-8 max-w-md mx-auto">
       <p className="text-gray-400 mb-4 text-lg">拼出你听到的单词</p>
       {enriched && <p className="text-sm text-indigo-500 mb-6 animate-fade-in">释义：{enriched.chinese}</p>}
 
-      {/* 拼写格 */}
       <div className="flex gap-2 mb-8">
         {Array.from({ length: target.length }).map((_, i) => (
           <div
@@ -97,15 +86,14 @@ export default function SpellPhase({ word, enriched, onSubmit, onSkip }: Props) 
         ))}
       </div>
 
-      {/* 候选字母：按索引判断是否已被选中 */}
-      <div className={`flex flex-wrap gap-3 justify-center ${shakeKey > 0 ? 'animate-wiggle' : ''}`} key={`shake-${shakeKey}`}>
+      <div className="flex flex-wrap gap-3 justify-center">
         {scrambled.map((letter, i) => {
           const isSelected = selectedIndices.includes(i);
           return (
             <button
               key={i}
               disabled={isSelected || selectedIndices.length >= target.length}
-              onClick={() => addLetter(letter)}
+              onClick={() => selectIndex(i)}
               className={`w-14 h-14 rounded-xl text-2xl font-extrabold shadow transition ${
                 isSelected
                   ? 'bg-gray-100 text-gray-300 cursor-not-allowed'

@@ -22,7 +22,7 @@ export default function App() {
     skipWord, nextWord, quit,
   } = useGameStore();
 
-  const { recordResult } = useStats();
+  const { recordResult, getWrongWords } = useStats();
   const { currentBatch } = useWordBanks();
   const { settings, saveSettings, advanceDay } = useStudyPlan();
   const { getEnriched } = useEnrich();
@@ -52,8 +52,7 @@ export default function App() {
   };
 
   const handleReviewWrong = () => {
-    // 从 roundResults 中提取错词（与 hasWrongWords 按钮显示逻辑同一数据源）
-    const wrongWords = [...new Set(roundResults.filter(r => !r.correct).map(r => r.word))];
+    const wrongWords = getWrongWords();
     if (wrongWords.length === 0) return;
     startReview(wrongWords);
   };
@@ -64,7 +63,6 @@ export default function App() {
   };
 
   const handleEnrichDone = async () => {
-    // 富化完成后回到首页
     setPhase('input');
   };
 
@@ -187,7 +185,7 @@ export default function App() {
         totalWords={words.length}
         onPlayAgain={handleFinishRound}
         onReviewWrong={handleReviewWrong}
-        hasWrongWords={roundResults.some(r => !r.correct)}
+        hasWrongWords={roundResults.some(r => !r.correct) || getWrongWords().length > 0}
       />
     );
   }
