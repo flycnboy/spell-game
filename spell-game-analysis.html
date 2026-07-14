@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>spell-game 应用分析报告</title>
+<style>
+  :root { --indigo:#534AB7; --teal:#0F6E56; --blue:#185FA5; --amber:#854F0B; --red:#A32D2D; --gray:#5F5E5A; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+        background:#F7F7F5; color:#2C2C2A; line-height:1.7; }
+  .wrap { max-width:880px; margin:0 auto; padding:32px 20px 64px; }
+  header { border-bottom:3px solid var(--indigo); padding-bottom:16px; margin-bottom:24px; }
+  h1 { font-size:26px; margin:0 0 6px; }
+  .sub { color:var(--gray); font-size:14px; }
+  h2 { font-size:20px; margin:36px 0 12px; padding-left:10px; border-left:4px solid var(--indigo); }
+  h3 { font-size:16px; margin:22px 0 8px; color:#3C3489; }
+  p { font-size:14.5px; }
+  .card { background:#fff; border:1px solid #E3E1DA; border-radius:14px; padding:18px 20px; margin:14px 0;
+         box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+  .kpi { background:#fff; border:1px solid #E3E1DA; border-radius:12px; padding:14px 16px; }
+  .kpi .n { font-size:22px; font-weight:700; color:var(--indigo); }
+  .kpi .t { font-size:13px; color:var(--gray); }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; margin:10px 0; background:#fff; border-radius:12px; overflow:hidden; }
+  th,td { border:1px solid #ECEAE3; padding:9px 12px; text-align:left; vertical-align:top; }
+  th { background:#F2F0EA; font-weight:600; }
+  code { background:#F1EFE8; padding:1px 6px; border-radius:5px; font-size:12.5px; }
+  .tag { display:inline-block; font-size:12px; padding:2px 9px; border-radius:999px; margin:2px 4px 2px 0; }
+  .tag.p0 { background:#FCEBEB; color:var(--red); }
+  .tag.p1 { background:#FAEEDA; color:var(--amber); }
+  .tag.p2 { background:#E1F5EE; color:var(--teal); }
+  .tag.ok { background:#EAF3DE; color:var(--teal); }
+  .tag.warn { background:#FBEAF0; color:#993556; }
+  ul { font-size:14.5px; } li { margin:4px 0; }
+  .muted { color:var(--gray); font-size:13px; }
+  .score { font-size:40px; font-weight:800; color:var(--indigo); }
+  .svgbox { background:#fff; border:1px solid #E3E1DA; border-radius:14px; padding:12px; margin:14px 0; }
+  .note { background:#FFF8E8; border:1px solid #FAC775; border-radius:10px; padding:12px 14px; font-size:13.5px; }
+  footer { margin-top:40px; padding-top:16px; border-top:1px solid #E3E1DA; color:var(--gray); font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>「梓晏的单词学习」(spell-game) 应用分析报告</h1>
+    <div class="sub">分析对象：J:\SynologyDrive\MyProject\spell-game · 分析时间：2026-07-14 · 口径：源码 + 配置 + 部署脚本 + 操作手册 + git 历史</div>
+  </header>
+
+  <div class="card">
+    <h3 style="margin-top:0">一句话结论</h3>
+    <p>这是一款<strong>面向小学生的纯前端英语单词学习 PWA</strong>，采用 React 19 + TypeScript + Vite + Tailwind + Zustand 技术栈，支持「拼写 / 听写」两种模式、艾宾浩斯间隔复习、词库远程同步与本地管理、单词释义联网富化、错题本与统计。结构清晰、功能完整、文档齐全，<strong>作为个人/家庭项目质量已经很高</strong>。主要短板在于「无后端导致数据孤岛」「听音环节需手动点击」「少量死代码与未抽离的 setState」。</p>
+  </div>
+
+  <div class="grid">
+    <div class="kpi"><div class="n">11</div><div class="t">页面组件</div></div>
+    <div class="kpi"><div class="n">5</div><div class="t">自定义 Hook</div></div>
+    <div class="kpi"><div class="n">2</div><div class="t">学习模式</div></div>
+    <div class="kpi"><div class="n">0</div><div class="t">后端 / 数据库</div></div>
+    <div class="kpi"><div class="n">4</div><div class="t">复习间隔(天)</div></div>
+    <div class="kpi"><div class="n">3</div><div class="t">外部 API</div></div>
+  </div>
+
+  <h2>一、应用定位与用户</h2>
+  <div class="card">
+    <ul>
+      <li><strong>做什么：</strong>帮小学生（「梓晏」）练英语单词拼写/听写，家长/运营人员可管理词库与查看统计。</li>
+      <li><strong>形态：</strong>PWA（渐进式 Web 应用），浏览器打开即用，可「添加到主屏幕」伪装在安卓平板/手机上当作 App。</li>
+      <li><strong>核心体验：</strong>听音 → 拼写/听写 → 即时判定 → 看释义 → 下一题 → 星级总结；错词自动进入错题本并可强化练习。</li>
+      <li><strong>差异化：</strong>内置艾宾浩斯遗忘曲线（第 1/7/16/30 天自动排复习），以及「联网取词释义 + 例句」的富化能力。</li>
+    </ul>
+  </div>
+
+  <h2>二、技术栈</h2>
+  <table>
+    <tr><th>维度</th><th>选型</th><th>备注</th></tr>
+    <tr><td>框架</td><td>React 19.2 + TypeScript 6</td><td>已移除 StrictMode（避免语音双重渲染）</td></tr>
+    <tr><td>构建</td><td>Vite 8.1</td><td><code>base: '/spell-game/'</code>，产物输出到 <code>docs/</code></td></tr>
+    <tr><td>样式</td><td>Tailwind CSS 3.4</td><td>自定义动画（bounce-in / fade-in / wiggle / pop 等）</td></tr>
+    <tr><td>状态</td><td>Zustand 5</td><td>仅管理「本局游戏」状态</td></tr>
+    <tr><td>持久化</td><td>浏览器本地存储</td><td>5 个键，无云端</td></tr>
+    <tr><td>语音</td><td>Web Speech API (SpeechSynthesis)</td><td>依赖设备 TTS 引擎，需 HTTPS</td></tr>
+    <tr><td>词库同步</td><td>GitHub Gist raw URL</td><td>fetch 文本后解析</td></tr>
+    <tr><td>释义 API</td><td>dictionaryapi.dev + MyMemory</td><td>免费、无需 key</td></tr>
+    <tr><td>部署</td><td>Gitee 主仓 → 镜像 → GitHub Pages</td><td>见 <code>优化app并同步线上端app步骤1.txt</code></td></tr>
+  </table>
+  <div class="note">⚠️ <code>package.json</code> 声明了 <code>isomorphic-git</code> 依赖，但全项目<strong>零引用</strong>——属于冗余依赖，可移除。</div>
+
+  <h2>三、架构与目录结构</h2>
+  <div class="svgbox">
+    <svg viewBox="0 0 680 430" width="100%">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <rect x="30" y="30" width="620" height="370" rx="20" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+      <text x="60" y="58" fill="#2C2C2A" font-size="14" font-weight="500">spell-game 应用架构（纯前端 PWA）</text>
+      <g>
+        <rect x="70" y="76" width="540" height="68" rx="12" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+        <text x="340" y="102" text-anchor="middle" fill="#26215C" font-size="14" font-weight="500">UI 组件层</text>
+        <text x="340" y="124" text-anchor="middle" fill="#3C3489" font-size="12">App.tsx 按 phase 分发 · 11 个页面组件（BankManager / Listen / Spell / Dictation / Result / Summary …）</text>
+      </g>
+      <line x1="340" y1="144" x2="340" y2="166" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <g>
+        <rect x="70" y="166" width="540" height="116" rx="12" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+        <text x="340" y="190" text-anchor="middle" fill="#04342C" font-size="14" font-weight="500">状态与逻辑层</text>
+        <text x="92" y="212" fill="#085041" font-size="12">gameStore (Zustand)：phase / mode / roundResults / isReviewMode</text>
+        <g><rect x="86" y="226" width="96" height="34" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/><text x="134" y="244" text-anchor="middle" fill="#444441" font-size="12">useWordBanks</text></g>
+        <g><rect x="190" y="226" width="96" height="34" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/><text x="238" y="244" text-anchor="middle" fill="#444441" font-size="12">useStats</text></g>
+        <g><rect x="294" y="226" width="96" height="34" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/><text x="342" y="244" text-anchor="middle" fill="#444441" font-size="12">useStudyPlan</text></g>
+        <g><rect x="398" y="226" width="96" height="34" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/><text x="446" y="244" text-anchor="middle" fill="#444441" font-size="12">useEnrich</text></g>
+        <g><rect x="502" y="226" width="96" height="34" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/><text x="550" y="244" text-anchor="middle" fill="#444441" font-size="12">useSpeech(未用)</text></g>
+      </g>
+      <line x1="340" y1="282" x2="340" y2="298" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <g>
+        <rect x="70" y="298" width="540" height="84" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+        <text x="340" y="322" text-anchor="middle" fill="#042C53" font-size="14" font-weight="500">存储与外部服务</text>
+        <text x="92" y="344" fill="#0C447C" font-size="12">浏览器本地存储 × 5 键：batches / stats / settings / enriched / spellplan_*</text>
+        <text x="92" y="366" fill="#0C447C" font-size="12">外部 API：dictionaryapi.dev（释义）· MyMemory（翻译）· Gist（远程词库）</text>
+      </g>
+    </svg>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">目录职责</h3>
+    <ul>
+      <li><code>src/App.tsx</code>：根组件，纯「阶段路由」——按 <code>phase</code> 渲染对应页面，并承担跨 hook 的编排（提交答案、跳过的统计落库等）。</li>
+      <li><code>src/store/gameStore.ts</code>：Zustand store，管理一局游戏的瞬时状态与流转（startGame / submitAnswer / nextWord / quit 等）。</li>
+      <li><code>src/hooks/*</code>：5 个 hook 各自封装一类「浏览器本地存储」数据，是事实上的数据访问层。</li>
+      <li><code>src/components/*</code>：11 个页面/面板组件，UI 与交互集中于此。</li>
+      <li><code>docs/</code>：Vite 构建产物，即 GitHub Pages 实际托管的静态站点。</li>
+      <li><code>generate_help_doc.py</code>：用 python-docx 生成《操作与运维手册》docx，文档即代码。</li>
+    </ul>
+  </div>
+
+  <h2>四、核心功能拆解</h2>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0">① 两种学习模式</h3>
+      <p><strong>拼写</strong>：字母打乱成方块，点选或键盘输入拼出单词。<br><strong>听写</strong>：只放发音（可设 1/2/3 遍），孩子手输单词，答错可「显示答案」。</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">② 词库管理</h3>
+      <p>远程同步(Gist)、本地新建、JSON 批量导入/导出、词库重命名/删除、单词增删、从其他库导入、勾选另存新库。</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">③ 艾宾浩斯复习</h3>
+      <p>新词在第 1/7/16/30 天自动排入复习；每日先展示「今日计划」再开练；学完自动推进到第二天。</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">④ 单词释义富化</h3>
+      <p>联网取中文翻译+英文释义+例句，结果缓存本地，下次免流量；释义在听音/拼写/结果页展示。</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">⑤ 统计与错词本</h3>
+      <p>总次数/正确率/今日量；错词列表，答对自动移除；一键「强化练习错词」。</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">⑥ 完成总结</h3>
+      <p>本轮正确率 + 星级（≥90% 三星）+ 逐词清单；可再来一轮或强化错词。</p>
+    </div>
+  </div>
+
+  <h2>五、数据流与持久化</h2>
+  <div class="card">
+    <p>所有状态都落在<strong>浏览器本地存储</strong>上，没有服务端。共 5 个键：</p>
+    <table>
+      <tr><th>键名</th><th>内容</th><th>写入方</th></tr>
+      <tr><td><code>spellgame_batches</code></td><td>全部词库 + 当前词库 id</td><td>useWordBanks</td></tr>
+      <tr><td><code>spellgame_stats</code></td><td>错题本 + 历史答题记录</td><td>useStats</td></tr>
+      <tr><td><code>spellgame_settings</code></td><td>每天新词数 / 总天数</td><td>useStudyPlan</td></tr>
+      <tr><td><code>spellgame_enriched</code></td><td>单词释义缓存（按词）</td><td>useEnrich</td></tr>
+      <tr><td><code>spellplan_&lt;batchId&gt;</code></td><td>当前学到第几天</td><td>useStudyPlan</td></tr>
+    </table>
+    <div class="note">数据孤岛风险：本地存储<strong>只在本机本浏览器有效</strong>。换设备/清缓存/换浏览器，词库以外的数据（统计、释义缓存、学习进度）都会丢失；词库虽可经 Gist 同步，但统计与进度无法跨设备。备份只能靠手动「导出全部」JSON。</div>
+  </div>
+
+  <h2>六、代码质量评估</h2>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--teal)">优点</h3>
+      <ul>
+        <li>分层清晰：UI / 状态 / 存储三层分离，组件职责单一。</li>
+        <li>状态集中：游戏流转统一在 Zustand，便于推理。</li>
+        <li>数据访问收敛到 5 个 hook，本地存储读写有统一封装。</li>
+        <li>移动优先 + 自定义动画，儿童交互友好。</li>
+        <li>文档齐全：操作手册 docx + 帮助文档生成脚本 + 部署说明。</li>
+        <li>释义渲染走 React 文本节点，<strong>天然防 XSS</strong>。</li>
+        <li>富化失败被 try/catch 吸收，单点 API 故障不致命。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--red)">不足</h3>
+      <ul>
+        <li>死代码：<code>useSpeech.ts</code> 写好却从未被引用（组件直接用原生 speechSynthesis）。</li>
+        <li>冗余依赖：<code>isomorphic-git</code> 声明未使用。</li>
+        <li>模板残留：<code>src/assets/react.svg</code>、<code>vite.svg</code> 及根目录 <code>assets/</code> 旧构建产物未清理。</li>
+        <li><code>App.tsx</code> 中直接 <code>useGameStore.setState({mode})</code> 绕过 store action，混合了编排与状态。</li>
+        <li>无测试（仅 oxlint），<code>useStudyPlan</code> 的复习计算等核心逻辑缺单测保护。</li>
+        <li>根目录散落数据样例（<code>wordbacks_*.json</code> 等），与源码混放。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>七、发现的问题与风险（按优先级）</h2>
+  <table>
+    <tr><th>级别</th><th>问题</th><th>影响</th></tr>
+    <tr><td><span class="tag p0">P0</span></td><td>听音/听写环节需<strong>手动点喇叭</strong>才发声；进入 phase 不会自动朗读</td><td>听力练习的关键一步要多一次点击，低龄用户易卡住；建议进入 listen 自动播 1 遍</td></tr>
+    <tr><td><span class="tag p0">P0</span></td><td>「强化错词」结束后仍会 <code>advanceDay</code>，把复习误当「新的一天」推进计划</td><td>复习与「学新词进度」耦合，长期会让艾宾浩斯排期失真</td></tr>
+    <tr><td><span class="tag p0">P0</span></td><td>数据仅存本地，跨设备/清缓存即丢失（统计、进度、释义缓存）</td><td>换平板或从手机换设备，学习成果清零</td></tr>
+    <tr><td><span class="tag p1">P1</span></td><td>释义依赖 dictionaryapi.dev（仅英文词条）+ MyMemory，可能 404 或限流</td><td>个别词释义为空；MyMemory 有软性日限额</td></tr>
+    <tr><td><span class="tag p1">P1</span></td><td><code>enrichWords</code> 串行逐个 fetch + 300ms 延迟，大词库耗时长</td><td>数百词时等待明显（已做每词落盘防中断丢失，这点做得好）</td></tr>
+    <tr><td><span class="tag p1">P1</span></td><td>「再来一轮」与「返回首页」复用同一回调，都会推进天数</td><td>仅看总结也想回首页时，天数被+1</td></tr>
+    <tr><td><span class="tag p2">P2</span></td><td>听写模式只做了小写精确匹配，无近音/拼写容错</td><td>孩子拼写接近但差一个字母直接判错，体验偏硬</td></tr>
+    <tr><td><span class="tag p2">P2</span></td><td>无深色模式/大字体等儿童护眼设置；<code>user-scalable=no</code> 禁缩放</td><td>长时间使用舒适度一般</td></tr>
+  </table>
+
+  <h2>八、改进建议路线图</h2>
+  <div class="card">
+    <h3 style="margin-top:0">立即做（体验修复，成本低）</h3>
+    <ul>
+      <li>进入 <code>listen</code> 阶段自动朗读一次（用已有 <code>gUtterance</code> 机制即可）。</li>
+      <li>复习（review）流程<strong>不调用 advanceDay</strong>，与「学新词」进度解耦。</li>
+      <li>清理死代码：删 <code>useSpeech.ts</code>、<code>isomorphic-git</code> 依赖、模板 svg、根 <code>assets/</code> 旧产物。</li>
+      <li>把 <code>App.tsx</code> 里直接 <code>setState</code> 收敛为 store 的 action（如 <code>setMode</code>）。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">短期做（质量与可靠性）</h3>
+    <ul>
+      <li>为 <code>useStudyPlan</code>（复习计算）、<code>gameStore</code>（流转）补单元测试（Vitest）。</li>
+      <li>释义获取增加超时 + 失败重试 + 降级提示，避免静默空白。</li>
+      <li>听写增加「大小写/尾标点容错」「近音词提示」。</li>
+      <li>数据样例（json）移出仓库根或加入 .gitignore。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">中期做（能力扩展）</h3>
+    <ul>
+      <li><strong>跨设备同步</strong>：复用 Gist 把 stats / enriched / 进度也云端化，或接入轻量 BaaS。</li>
+      <li>支持手动录入中文释义（不依赖联网），离线可用。</li>
+      <li>错题按「错误次数」加权复习，而非固定 1/7/16/30 间隔。</li>
+      <li>儿童护眼：深色模式、字号调节、学习时长温和提醒。</li>
+      <li>CI 自动构建 + 部署，免去手动镜像同步（GitHub Actions 直发 Pages）。</li>
+    </ul>
+  </div>
+
+  <h2>九、部署与运维现状</h2>
+  <div class="card">
+    <ul>
+      <li><strong>主仓</strong>：Gitee（<code>flycnboy/spell-game</code>），<strong>镜像</strong>到 GitHub，<strong>GitHub Pages</strong> 托管 <code>docs/</code>（路径 <code>/spell-game/</code>）。</li>
+      <li><strong>线上地址</strong>：<code>https://flycnboy.github.io/spell-game/</code></li>
+      <li><strong>发布流程</strong>：改码 → <code>npm run build</code> → 提交 Gitee → 手动点镜像同步 → Pages 自动更新。</li>
+      <li><strong>词库运营</strong>：编辑 Gist 文本 → 手机端「同步远程」拉取。</li>
+      <li>历史提交健康，fix/feat 粒度清晰；已修复过空白页、错词练习、重复字母等真实问题。</li>
+    </ul>
+  </div>
+
+  <h2>十、总体评价</h2>
+  <div class="card">
+    <div class="score">8.0<span style="font-size:16px;color:var(--gray)"> / 10</span></div>
+    <p class="muted">面向「家庭/个人单词学习」这一明确场景，spell-game 在<strong>功能完整度、交互友好度、文档完备度</strong>上都超出个人项目平均水平，架构也干净可维护。扣分点集中在：跨设备数据孤岛、听音需手动触发、少量死代码与缺测试。这些都是「体验/工程化」层面的 Enhancement，而非架构性硬伤，改动成本可控。</p>
+    <p style="margin:10px 0 0"><span class="tag ok">功能完整</span><span class="tag ok">交互友好</span><span class="tag ok">文档齐全</span><span class="tag warn">数据孤岛</span><span class="tag warn">缺测试</span><span class="tag warn">听音手动</span></p>
+  </div>
+
+  <footer>
+    本报告基于仓库静态分析生成，未运行构建/测试。如需我直接动手修复 P0 项（自动朗读、复习不推进天数、清理死代码）或补单元测试，告诉我即可。
+  </footer>
+</div>
+</body>
+</html>

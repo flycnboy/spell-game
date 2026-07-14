@@ -1,22 +1,17 @@
 import { useState, useCallback } from 'react';
+import { computeTodayPlan, type DayState } from '../lib/plan';
 
 export interface StudySettings {
   wordsPerDay: number;
   totalDays: number;
 }
 
-// 艾宾浩斯复习间隔（天）
-const REVIEW_INTERVALS = [1, 7, 16, 30];
-
-interface DayState {
-  day: number;
-  newWords: string[];
-  reviewSlots: { fromDay: number; words: string[] }[];
-  done: boolean; // 是否已完成当天学习
-}
-
 function getDayKey(batchId: string) {
   return `spellplan_${batchId}`;
+}
+
+function getLearnedKey(batchId: string) {
+  return `spellplan_learned_${batchId}`;
 }
 
 function loadDay(batchId: string): number {
@@ -29,6 +24,18 @@ function loadDay(batchId: string): number {
 
 function saveDay(batchId: string, day: number) {
   localStorage.setItem(getDayKey(batchId), String(day));
+}
+
+function loadLearned(batchId: string): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(getLearnedKey(batchId));
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return {};
+}
+
+function saveLearned(batchId: string, map: Record<string, number>) {
+  localStorage.setItem(getLearnedKey(batchId), JSON.stringify(map));
 }
 
 export function useStudyPlan() {
@@ -46,31 +53,34 @@ export function useStudyPlan() {
   };
 
   const getTodayPlan = useCallback(
-    (allWords: string[], batchId: string): DayState => {
+    (
+      allWords: string[],
+      batchId: string,
+      errorCounts: Record<string, number> = {},
+      reviewSchedule: Record<string, number> = {},
+      learnedDays: Record<string, number> = {}
+    ): DayState => {
       const day = loadDay(batchId);
-      const wpd = settings.wordsPerDay;
-
-      // 今天学的新词
-      const start = (day - 1) * wpd;
-      const newWords = allWords.slice(start, start + wpd);
-
-      // 需要复习的旧词
-      const reviewSlots: { fromDay: number; words: string[] }[] = [];
-      for (const interval of REVIEW_INTERVALS) {
-        const reviewDay = day - interval;
-        if (reviewDay >= 1) {
-          const rStart = (reviewDay - 1) * wpd;
-          const words = allWords.slice(rStart, rStart + wpd);
-          if (words.length > 0) {
-            reviewSlots.push({ fromDay: reviewDay, words });
-          }
+      const ld = { ...loadLearned(batchId), ...learnedDays };
+      const plan = computeTodayPlan(allWords, day, settings.wordsPerDay, errorCounts, reviewSchedule, ld);
+      // 固化当天新词的 learnedDay，避免中途改每日词数后排程漂移
+      if (plan.newWords.length) {
+        const map = loadLearned(batchId);
+        let changed = false;
+        for (const w of plan.newWords) {
+          const k = w.toLowerCase();
+          if (map[k] === undefined) { map[k] = day; changed = true; }
         }
+        if (changed) saveLearned(batchId, map);
       }
-
-      return { day, newWords, reviewSlots, done: false };
+      return plan;
     },
     [settings.wordsPerDay]
   );
+
+  const getLearnedDays = useCallback((batchId: string): Record<string, number> => loadLearned(batchId), []);
+
+  const getDay = useCallback((batchId: string): number => loadDay(batchId), []);
 
   const advanceDay = useCallback((batchId: string) => {
     const day = loadDay(batchId);
@@ -79,7 +89,8 @@ export function useStudyPlan() {
 
   const resetPlan = useCallback((batchId: string) => {
     saveDay(batchId, 1);
+    localStorage.removeItem(getLearnedKey(batchId));
   }, []);
 
-  return { settings, saveSettings, getTodayPlan, advanceDay, resetPlan };
+  return { settings, saveSettings, getTodayPlan, getLearnedDays, getDay, advanceDay, resetPlan };
 }

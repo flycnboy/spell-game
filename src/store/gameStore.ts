@@ -12,6 +12,8 @@ interface GameState {
   isReviewMode: boolean;
 
   setPhase: (phase: GamePhase) => void;
+  setMode: (mode: GameMode) => void;
+  setReviewMode: (v: boolean) => void;
   startGame: (words: string[], mode: GameMode) => void;
   startReview: (words: string[]) => void;
   submitAnswer: (answer: string, correct: boolean) => void;
@@ -33,6 +35,10 @@ export const useGameStore = create<GameState>((set) => ({
   isReviewMode: false,
 
   setPhase: (phase) => set({ phase }),
+
+  setMode: (mode) => set({ mode }),
+
+  setReviewMode: (v) => set({ isReviewMode: v }),
 
   startGame: (words, mode) => set({
     words,

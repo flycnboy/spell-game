@@ -1,5 +1,6 @@
 import { useStudyPlan } from '../hooks/useStudyPlan';
 import { useWordBanks } from '../hooks/useWordBanks';
+import { useStats } from '../hooks/useStats';
 
 interface Props {
   mode: 'spell' | 'dictation';
@@ -9,18 +10,22 @@ interface Props {
 
 export default function TodayPlan({ mode, onStart, onBack }: Props) {
   const { currentBatch } = useWordBanks();
-  const { getTodayPlan, resetPlan } = useStudyPlan();
+  const { getTodayPlan, getLearnedDays, resetPlan } = useStudyPlan();
+  const { getErrorCounts, getReviewSchedule } = useStats();
 
   if (!currentBatch) return null;
 
-  let plan = getTodayPlan(currentBatch.words, currentBatch.id);
-  let allWords = [...plan.newWords, ...plan.reviewSlots.flatMap(s => s.words)];
+  const errorCounts = getErrorCounts();
+  const reviewSchedule = getReviewSchedule();
+  const learnedDays = getLearnedDays(currentBatch.id);
+  let plan = getTodayPlan(currentBatch.words, currentBatch.id, errorCounts, reviewSchedule, learnedDays);
+  let allWords = [...plan.newWords, ...plan.reviewWords];
 
   // 超出范围自动重置
   if (allWords.length === 0 && currentBatch.words.length > 0) {
     resetPlan(currentBatch.id);
-    plan = getTodayPlan(currentBatch.words, currentBatch.id);
-    allWords = [...plan.newWords, ...plan.reviewSlots.flatMap(s => s.words)];
+    plan = getTodayPlan(currentBatch.words, currentBatch.id, errorCounts, reviewSchedule, getLearnedDays(currentBatch.id));
+    allWords = [...plan.newWords, ...plan.reviewWords];
   }
 
   // 模式显示名
@@ -40,14 +45,21 @@ export default function TodayPlan({ mode, onStart, onBack }: Props) {
         </div>
       )}
 
-      {plan.reviewSlots.map((slot, i) => (
-        <div key={i} className="mb-4">
-          <p className="text-sm text-gray-500 mb-2 font-bold">📝 复习第 {slot.fromDay} 天的 ({slot.words.length})</p>
+      {plan.reviewWords.length > 0 && (
+        <div className="mb-4">
+          <p className="text-sm text-gray-500 mb-2 font-bold">📝 复习 ({plan.reviewWords.length})</p>
           <div className="flex flex-wrap gap-2">
-            {slot.words.map(w => <span key={w} className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-sm font-bold">{w}</span>)}
+            {plan.reviewWords.map(w => {
+              const errors = errorCounts[w.toLowerCase()] || 0;
+              return (
+                <span key={w} className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-sm font-bold">
+                  {w}{errors >= 2 && <span className="ml-1 text-xs text-orange-500">×{errors}</span>}
+                </span>
+              );
+            })}
           </div>
         </div>
-      ))}
+      )}
 
       {allWords.length === 0 && (
         <p className="text-center text-gray-300 py-10">词库已学完，请导入新词库或重置学习计划</p>

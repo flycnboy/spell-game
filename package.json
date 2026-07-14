@@ -7,10 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "tsc src/lib/review.ts src/lib/plan.ts src/lib/cloudMerge.ts test/run.test.ts --outDir .tmptest --module commonjs --target es2020 --moduleResolution node10 --skipLibCheck --esModuleInterop --ignoreConfig --ignoreDeprecations 6.0 && node -e \"require('fs').mkdirSync('.tmptest',{recursive:true});require('fs').writeFileSync('.tmptest/package.json','{\\\"type\\\":\\\"commonjs\\\"}')\" && node .tmptest/test/run.test.js"
   },
   "dependencies": {
-    "isomorphic-git": "^1.38.6",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zustand": "^5.0.14"

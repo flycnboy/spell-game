@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import BankManager from './components/BankManager';
 import TodayPlan from './components/TodayPlan';
 import SettingsPanel from './components/SettingsPanel';
@@ -13,36 +14,50 @@ import { useWordBanks } from './hooks/useWordBanks';
 import { useStudyPlan } from './hooks/useStudyPlan';
 import { useGameStore } from './store/gameStore';
 import { useEnrich } from './hooks/useEnrich';
+import { useCloudSync } from './hooks/useCloudSync';
+import type { CloudStatus } from './hooks/useCloudSync';
 
 export default function App() {
   const {
     phase, mode, words, currentIndex, isCorrect, lastAnswer,
     roundResults, isReviewMode,
-    setPhase, startGame, startReview, submitAnswer, retry,
+    setPhase, setMode, setReviewMode, startGame, startReview, submitAnswer, retry,
     skipWord, nextWord, quit,
   } = useGameStore();
 
-  const { recordResult, getWrongWords } = useStats();
+  const { recordResult, getWrongWords, markReviewed } = useStats();
   const { currentBatch } = useWordBanks();
-  const { settings, saveSettings, advanceDay } = useStudyPlan();
+  const { settings, saveSettings, getDay, advanceDay } = useStudyPlan();
   const { getEnriched } = useEnrich();
+  const { status: syncStatus, touch: syncTouch, start: startSync } = useCloudSync();
+
+  // 启动自动后台云端同步（仅初始化一次）
+  useEffect(() => { startSync(); }, []);
+
+  // 复习答案：记录结果并排程下次复习日（不推进学新词进度）
+  const handleReviewAnswer = (word: string, correct: boolean) => {
+    recordResult(word, mode, correct);
+    if (currentBatch) markReviewed([word], getDay(currentBatch.id));
+  };
 
   const handleSubmit = (answer: string) => {
     const word = words[currentIndex];
     const correct = answer.toLowerCase() === word.toLowerCase();
     submitAnswer(answer, correct);
-    recordResult(word, mode, correct);
+    if (isReviewMode) handleReviewAnswer(word, correct);
+    else recordResult(word, mode, correct);
   };
 
   const handleSkip = () => {
     const word = words[currentIndex];
     skipWord();
-    recordResult(word, mode, false);
+    if (isReviewMode) handleReviewAnswer(word, false);
+    else recordResult(word, mode, false);
   };
 
   const handleStartGame = (m: typeof mode) => {
     if (!currentBatch || currentBatch.words.length === 0) return;
-    useGameStore.setState({ mode: m });
+    setMode(m);
     setPhase('plan');
   };
 
@@ -58,23 +73,31 @@ export default function App() {
   };
 
   const handleFinishRound = () => {
-    if (currentBatch) advanceDay(currentBatch.id);
+    // 复习（强化错词）流程不推进「学新词」的天数进度
+    if (!isReviewMode && currentBatch) advanceDay(currentBatch.id);
+    // 退出复习模式，避免 isReviewMode 在主屏残留
+    if (isReviewMode) setReviewMode(false);
+    syncTouch(); // 进度/统计变化，触发后台同步
     setPhase('input');
   };
 
   const handleEnrichDone = async () => {
+    syncTouch(); // 释义变化，触发后台同步
     setPhase('input');
   };
 
   if (phase === 'input') {
     return (
-      <BankManager
-        onStartGame={handleStartGame}
-        onSettings={() => setPhase('settings')}
-        onStats={() => setPhase('stats')}
-        onEnrich={() => { setPhase('enrich'); }}
-        hasWords={!!currentBatch && currentBatch.words.length > 0}
-      />
+      <>
+        <SyncMini status={syncStatus} />
+        <BankManager
+          onStartGame={handleStartGame}
+          onSettings={() => setPhase('settings')}
+          onStats={() => setPhase('stats')}
+          onEnrich={() => { setPhase('enrich'); }}
+          hasWords={!!currentBatch && currentBatch.words.length > 0}
+        />
+      </>
     );
   }
 
@@ -191,4 +214,29 @@ export default function App() {
   }
 
   return null;
+}
+
+// 主屏顶部的云端同步状态条
+function SyncMini({ status }: { status: CloudStatus }) {
+  const text =
+    status.state === 'idle' ? '云端已同步' :
+    status.state === 'syncing' ? '同步中…' :
+    status.state === 'pending' ? '本地有改动，自动同步中' :
+    status.state === 'error' ? '同步失败' :
+    status.state === 'offline' ? '离线，将自动重试' :
+    status.state === 'needpass' ? '需输入同步密码' :
+    '自动同步未开启';
+  const color =
+    status.state === 'idle' ? 'bg-green-500' :
+    status.state === 'pending' ? 'bg-amber-500' :
+    status.state === 'syncing' ? 'bg-blue-500' :
+    status.state === 'error' ? 'bg-red-500' :
+    status.state === 'offline' ? 'bg-gray-400' :
+    status.state === 'needpass' ? 'bg-amber-500' : 'bg-gray-300';
+  return (
+    <div className="flex items-center gap-2 px-6 pt-2 text-xs text-gray-400">
+      <span className={`w-2 h-2 rounded-full ${color} ${status.state === 'syncing' ? 'animate-pulse' : ''}`} />
+      <span>{text}</span>
+    </div>
+  );
 }
