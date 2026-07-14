@@ -1,0 +1,156 @@
+{
+  "batches": [
+    {
+      "id": "mr8xgwei-lv1b",
+      "label": "K-48-The Mailman's Hat",
+      "date": "2026-07-06",
+      "words": [
+        "gusty",
+        "mailman",
+        "porch",
+        "pouch",
+        "shreds",
+        "treat"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8xm3yh-u87a",
+      "label": "K-53-Model Rockets+K-54-Mongo's Migration",
+      "date": "2026-07-06",
+      "words": [
+        "competitions",
+        "hobby",
+        "model",
+        "parachute",
+        "demanded",
+        "directions"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8xx03l-fe41",
+      "label": "K-55-Nature Stinks!",
+      "date": "2026-07-06",
+      "words": [
+        "disturb",
+        "rotten",
+        "spray",
+        "stinky"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8y011b-xi22",
+      "label": "K-57-One Pony Too Many",
+      "date": "2026-07-06",
+      "words": [
+        "bills",
+        "foal",
+        "responsibility",
+        "shaggy",
+        "stocky"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8y4nrk-92jk",
+      "label": "K-59-Police Officers",
+      "date": "2026-07-06",
+      "words": [
+        "communities",
+        "emergencies",
+        "patrol",
+        "siren",
+        "traffic",
+        "vehicles"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mr8y9dte-efwa",
+      "label": "K2（48~59）",
+      "date": "2026-07-06",
+      "words": [
+        "gusty",
+        "mailman",
+        "porch",
+        "pouch",
+        "shreds",
+        "treat"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mrf54lmq-iuqw",
+      "label": "K-64-Sam's Fourth of July",
+      "date": "2026-07-10",
+      "words": [
+        "barbecue",
+        "fireworks",
+        "independence",
+        "mayor",
+        "parade",
+        "patriotic"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mrf5cbmt-s99b",
+      "label": "K-65-Ships and Boats+K-67-Sled Dogs to the Rescue",
+      "date": "2026-07-10",
+      "words": [
+        "explorer",
+        "frame",
+        "propeller",
+        "goods",
+        "blizzard",
+        "disease",
+        "medicine",
+        "musher",
+        "relay"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mrf5h1ht-xya5",
+      "label": "K-69-Soccer Is a Kick!",
+      "date": "2026-07-10",
+      "words": [
+        "cleat",
+        "dribble",
+        "foul",
+        "goal",
+        "match"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mrf5psy0-o0og",
+      "label": "K-71-The Sorcerer's Apprentice",
+      "date": "2026-07-10",
+      "words": [
+        "cast",
+        "fetch",
+        "plead",
+        "salute",
+        "snicker",
+        "sorcerer"
+      ],
+      "source": ""
+    },
+    {
+      "id": "mrf5s2ld-w0fw",
+      "label": "K-73-Spain",
+      "date": "2026-07-10",
+      "words": [
+        "capital",
+        "festival",
+        "island",
+        "olive"
+      ],
+      "source": ""
+    }
+  ],
+  "currentBatchId": "mrf5s2ld-w0fw"
+}

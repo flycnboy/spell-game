@@ -1,0 +1,74 @@
+import { useEffect, useRef } from 'react';
+import type { EnrichedWord } from '../hooks/useEnrich';
+
+// 全局保持 utterance 引用，防止垃圾回收
+let gUtterance: SpeechSynthesisUtterance | null = null;
+
+interface Props {
+  word: string;
+  enriched: EnrichedWord | null;
+  onNext: () => void;
+  onSkip: () => void;
+}
+
+export default function ListenPhase({ word, enriched, onNext, onSkip }: Props) {
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const wordRef = useRef(word);
+  wordRef.current = word;
+
+  useEffect(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+
+    // 用原生 DOM 事件，绕过 React 合成事件
+    const handler = () => {
+      if (gUtterance) {
+        speechSynthesis.cancel();
+      }
+      const u = new SpeechSynthesisUtterance(wordRef.current);
+      u.lang = 'en-US';
+      u.rate = 0.7;
+      gUtterance = u;
+      speechSynthesis.speak(u);
+    };
+
+    btn.addEventListener('click', handler);
+    return () => btn.removeEventListener('click', handler);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center px-6 max-w-md mx-auto min-h-[70vh]">
+      <p className="text-gray-400 mb-4 text-lg">听一听，这是什么单词？</p>
+
+      <button
+        ref={btnRef}
+        className="w-32 h-32 rounded-full bg-yellow-400 active:bg-yellow-500 shadow-xl flex items-center justify-center text-5xl"
+      >
+        🔊
+      </button>
+
+      <p className="text-gray-300 text-sm mt-4 mb-8">点击喇叭播放发音</p>
+
+      {enriched && (
+        <div className="w-full bg-indigo-50 p-5 rounded-xl mb-6 text-center">
+          <p className="text-sm text-indigo-600 mb-1">释义：{enriched.chinese}</p>
+          <p className="text-sm text-gray-500 italic">{enriched.example.replace(/(^"|"$)/g, '')}</p>
+        </div>
+      )}
+
+      <button
+        onClick={onNext}
+        className="w-full py-4 bg-indigo-500 text-white rounded-xl font-bold text-lg active:bg-indigo-600 shadow-lg"
+      >
+        开始拼写
+      </button>
+
+      <button
+        onClick={onSkip}
+        className="mt-4 w-full py-2 text-sm text-gray-400 font-bold"
+      >
+        跳过本词 →
+      </button>
+    </div>
+  );
+}

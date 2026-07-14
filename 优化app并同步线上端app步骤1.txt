@@ -1,0 +1,13 @@
+保存到记忆系统。以后在任何电脑上操作这个项目，只需三步：
+
+
+git clone https://gitee.com/flycnboy/spell-game.git
+cd spell-game && npm install
+npm run dev     # 本地开发
+改完代码后：
+
+
+npm run build          # 构建
+git add . && git commit -m "描述改动"
+git push origin main   # 推送到 Gitee
+然后去 Gitee 手动点一次镜像同步，GitHub Pages 会自动更新。
